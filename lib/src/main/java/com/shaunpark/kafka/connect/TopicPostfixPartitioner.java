@@ -17,7 +17,6 @@ public class TopicPostfixPartitioner<T> extends TimeBasedPartitioner<T> {
     boolean removeDatabaseName = false;
     static String TOPIC_POSTFIX = "partitioner.topic.postfix";
     static String REMOVE_DATABASENAME = "partitioner.remove.databasename";
-    static String DOT = ".";
 
     @Override
     public void configure(Map<String, Object> config) {
@@ -44,16 +43,14 @@ public class TopicPostfixPartitioner<T> extends TimeBasedPartitioner<T> {
 
     @Override
     public String generatePartitionedPath(String topic, String encodedPartition) {
-        String topicName = new String(topic);
+        String topicName;
         if( removeDatabaseName ) {
-            if( topic != null ) {
-                int index = topic.indexOf(DOT);
-                if( index >= 0 ) {
-                    topicName = topic.substring(index);
-                }
-            }
+            topicName = PartitionUtil.removeDBName(topic);
+        } else {
+            topicName = topic;
         }
         
         return topicName + topicPostfix + delim + encodedPartition;  
     }
+
 }
