@@ -14,7 +14,10 @@ import io.confluent.connect.storage.partitioner.TimeBasedPartitioner;
 public class TopicPostfixPartitioner<T> extends TimeBasedPartitioner<T> {
     private static final Logger log = LoggerFactory.getLogger(TopicPostfixPartitioner.class);
     String topicPostfix = "";
+    boolean removeDatabaseName = false;
     static String TOPIC_POSTFIX = "partitioner.topic.postfix";
+    static String REMOVE_DATABASENAME = "partitioner.remove.databasename";
+    static String DOT = ".";
 
     @Override
     public void configure(Map<String, Object> config) {
@@ -26,10 +29,31 @@ public class TopicPostfixPartitioner<T> extends TimeBasedPartitioner<T> {
         } else {
             log.info("Topic post fix is set: '" + topicPostfix+ "'");
         }
+
+        String removeDatabaseNameStr = (String)config.get(REMOVE_DATABASENAME);
+        
+        if (removeDatabaseNameStr != null && Boolean.valueOf(removeDatabaseNameStr.trim().toLowerCase())) {
+            removeDatabaseName = true;
+            log.info("Remove database name from topic name.");
+        } else {
+            removeDatabaseName = false;
+            log.info("Keep database name in topic name");
+        }
+
     }
 
     @Override
     public String generatePartitionedPath(String topic, String encodedPartition) {
-        return topic + topicPostfix + delim + encodedPartition;  // The partitioned path should be unique for each topic, read disclaimer for more details.
+        String topicName = new String(topic);
+        if( removeDatabaseName ) {
+            if( topic != null ) {
+                int index = topic.indexOf(DOT);
+                if( index >= 0 ) {
+                    topicName = topic.substring(index);
+                }
+            }
+        }
+        
+        return topicName + topicPostfix + delim + encodedPartition;  
     }
 }
